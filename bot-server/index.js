@@ -4,6 +4,11 @@ import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const app = express();
@@ -16,6 +21,10 @@ const smailproBaseUrl = "https://api.sonjj.com/v1/temp_email";
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the Vite build directory
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
 
 // SmailPro API Helpers
 async function getPayload(url, params = {}) {
@@ -130,6 +139,11 @@ app.listen(port, () => {
 
 bot.launch();
 console.log('Telegram Bot started!');
+
+// Handle SPA routing: serve index.html for any unknown routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
 
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
